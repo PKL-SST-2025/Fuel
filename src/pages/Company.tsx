@@ -1,32 +1,32 @@
-import { For, createSignal } from 'solid-js';
-import { MapPin, Bell, User, Menu, Search, Filter, MoreHorizontal, Heart, Share2, Star, Users, Car, Plus, ChevronDown } from 'lucide-solid';
-import { A } from '@solidjs/router';
-import brandIcon from '../assets/brandicon.png';
-import homeIcon from '../assets/SideBar/Home.png';
-import ExploreIcon from '../assets/SideBar/Explor.png';
-import CompanyIcon from '../assets/SideBar/Company.png';
-import ScanIcon from '../assets/SideBar/Scan.png';
-import WishlistIcon from '../assets/SideBar/Wishlist.png';
-import ProfileIcon from '../assets/SideBar/Profil.png';
-import LogoutIcon from '../assets/SideBar/exit.png';
-import HouseIcon from '../assets/SideBar/House.png';
-import LocationIcon from '../assets/SideBar/Lokasi.png';
-import FuelIcon from '../assets/SideBar/Fuel.png';
-import Notif from '../assets/SideBar/Notif1.png';
-import Cbiru from '../assets/SideBar/Cbiru.png';
-import Caktif from '../assets/SideBar/Caktif.png';
-import Notifikasi from '../assets/SideBar/Notif.png';
-import BP from '../assets/Company/BP.png';
-import Shell from '../assets/Company/LogoS.png';
-import Vivo from '../assets/Company/LogoV.png';
-import Mobil from '../assets/Company/M.png';
-import Pertamina from '../assets/Company/LogoP.png';
-import GSM from '../assets/Company/GSM.png';
-import JM from '../assets/Company/JM.png';
-import Motul from '../assets/Company/Motul.png';
-import OliG from '../assets/Company/olim.jpg';
-import PB from '../assets/Company/PB.png';
-import BERKOH from '../assets/Company/PerBerkoh.png';
+  import { For, createSignal } from 'solid-js';
+  import { MapPin, Bell, User, Menu, Search, Filter, MoreHorizontal, Heart, Share2, Star, Users, Car, Plus, ChevronDown } from 'lucide-solid';
+  import { A } from '@solidjs/router';
+  import brandIcon from '../assets/brandicon.png';
+  import homeIcon from '../assets/SideBar/Home.png';
+  import ExploreIcon from '../assets/SideBar/Explor.png';
+  import CompanyIcon from '../assets/SideBar/Company.png';
+  import ScanIcon from '../assets/SideBar/Scan.png';
+  import WishlistIcon from '../assets/SideBar/Wishlist.png';
+  import ProfileIcon from '../assets/SideBar/Profil.png';
+  import LogoutIcon from '../assets/SideBar/exit.png';
+  import HouseIcon from '../assets/SideBar/House.png';
+  import LocationIcon from '../assets/SideBar/Lokasi.png';
+  import FuelIcon from '../assets/SideBar/Fuel.png';
+  import Notif from '../assets/SideBar/Notif1.png';
+  import Cbiru from '../assets/SideBar/Cbiru.png';
+  import Caktif from '../assets/SideBar/Caktif.png';
+  import Notifikasi from '../assets/SideBar/Notif.png';
+  import BP from '../assets/Company/BP.png';
+  import Shell from '../assets/Company/LogoS.png';
+  import Vivo from '../assets/Company/LogoV.png';
+  import Mobil from '../assets/Company/M.png';
+  import Pertamina from '../assets/Company/LogoP.png';
+  import GSM from '../assets/Company/GSM.png';
+  import JM from '../assets/Company/JM.png';
+  import Motul from '../assets/Company/Motul.png';
+  import OliG from '../assets/Company/olim.jpg';
+  import PB from '../assets/Company/PB.png';
+  import BERKOH from '../assets/Company/PerBerkoh.png';
 
 
 
@@ -184,7 +184,16 @@ const Company = () => {
               </div>
             </div>
             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <img src={Notif} alt="logo" class="w-5 h-5" />
+              <img
+                src={Notif}
+                alt="logo"
+                class="w-5 h-5 cursor-pointer"
+                ref={el => (window as any).notifAnchor = el}
+                onClick={e => {
+                  (window as any).notifAnchor = e.currentTarget;
+                  (window as any).setNotifOpen(true);
+                }}
+              />
             </div>
             <img src={ProfileIcon} alt="logo" class="w-10 h-10" />
           </div>
@@ -263,7 +272,13 @@ const Company = () => {
                 <For each={companies}>{(company) => (
                   <div class="flex flex-col items-center bg-gray-100 rounded-2xl p-2">
                     <div class={`w-12 h-12 rounded-lg flex items-center justify-center mb-2`}>
-                      <img src={company.logo} alt="" />
+                      {company.name === 'Shell' ? (
+                        <A href="/brand">
+                          <img src={Shell} alt="" />
+                        </A>
+                      ) : (
+                        <img src={company.logo} alt="" />
+                      )}
                     </div>
                     <span class="text-xs text-gray-600 text-center">{company.name}</span>
                   </div>

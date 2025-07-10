@@ -60,7 +60,16 @@ const Scan = () => {
               </div>
             </div>
             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <img src={Notif} alt="logo" class="w-5 h-5" />
+              <img
+                src={Notif}
+                alt="logo"
+                class="w-5 h-5 cursor-pointer"
+                ref={el => (window as any).notifAnchor = el}
+                onClick={e => {
+                  (window as any).notifAnchor = e.currentTarget;
+                  (window as any).setNotifOpen(true);
+                }}
+              />
             </div>
             <img src={ProfileIcon} alt="logo" class="w-10 h-10" />
           </div>

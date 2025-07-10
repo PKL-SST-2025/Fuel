@@ -1,4 +1,4 @@
-import { Search, MapPin, Heart, Star, MoreHorizontal, Filter, ChevronDown, ArrowLeftRight, ChevronRight, Edit, Download } from 'lucide-solid';
+import { Search, MapPin, Heart, Star, MoreHorizontal, Filter, ChevronDown, ArrowLeftRight, ChevronRight, Edit, Download, Check } from 'lucide-solid';
 import brandIcon from '../assets/brandicon.png';
 import homeIcon from '../assets/SideBar/Home.png';
 import ExploreIcon from '../assets/SideBar/Explor.png';
@@ -18,9 +18,40 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
+import { useNavigate } from '@solidjs/router';
 
 const Profile = () => {
   const [activeTab, setActiveTab] = createSignal(1);
+  const [showModal, setShowModal] = createSignal('');
+  const [isEditProfile, setIsEditProfile] = createSignal(false);
+  const [isEditPersonal, setIsEditPersonal] = createSignal(false);
+  const [isEditAddress, setIsEditAddress] = createSignal(false);
+  const [profileImg, setProfileImg] = createSignal(ProfileIcon);
+  const [firstName, setFirstName] = createSignal('Gojo');
+  const [lastName, setLastName] = createSignal('Satoru');
+  const [email, setEmail] = createSignal('zenmuhammad900@gmail.com');
+  const [phone, setPhone] = createSignal('+62 895 2035 8258');
+  const [bio, setBio] = createSignal('Admin');
+  const [country, setCountry] = createSignal('Indonesia');
+  const [cityState, setCityState] = createSignal('Purwokerto, Jawa Tengah');
+  const [kodePos, setKodePos] = createSignal('53141');
+  const [taxId, setTaxId] = createSignal('-');
+  const navigate = useNavigate();
+
+  // Untuk handle upload gambar profil
+  const handleProfileImgChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files && target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target && typeof ev.target.result === 'string') {
+          setProfileImg(ev.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div class="min-h-screen bg-gray-50">
@@ -60,7 +91,16 @@ const Profile = () => {
               </div>
             </div>
             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <img src={Notif} alt="logo" class="w-5 h-5" />
+              <img
+                src={Notif}
+                alt="logo"
+                class="w-5 h-5 cursor-pointer"
+                ref={el => (window as any).notifAnchor = el}
+                onClick={e => {
+                  (window as any).notifAnchor = e.currentTarget;
+                  (window as any).setNotifOpen(true);
+                }}
+              />
             </div>
             <img src={ProfileIcon} alt="logo" class="w-10 h-10" />
           </div>
@@ -129,12 +169,15 @@ const Profile = () => {
               <div class="pt-124 border-t border-gray-200">
                 <Button
                   variant={activeTab() === 4 ? 'default' : 'ghost'}
-                  class={`w-full justify-start transition-all duration-300 ease-in-out relative overflow-hidden ${
+                  class={`w-full transition-all duration-300 ease-in-out relative overflow-hidden ${
                     activeTab() === 4 
                       ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg transform scale-105 border-l-4 border-white' 
                       : 'text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:scale-102 hover:shadow-md'
                   }`}
-                  onClick={() => setActiveTab(4)}
+                  onClick={() => {
+                    setActiveTab(4);
+                    setShowModal('hapus');
+                  }}
                 >
                   <span class={`transition-all duration-300 ${activeTab() === 4 ? 'font-semibold' : '' }`}>
                     Delete Account
@@ -152,21 +195,34 @@ const Profile = () => {
                 <Card>
                   <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-xl">My Profile</CardTitle>
-                    <Button variant="outline" size="sm">
-                      <Edit class="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
+                    <Show when={!isEditProfile()} fallback={
+                      <button
+                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
+                        onClick={() => setIsEditProfile(false)}
+                      >
+                        <Check class="w-4 h-4 mr-1" />
+                        <span class="font-semibold tracking-wide">Save</span>
+                      </button>
+                    }>
+                      <Button variant="outline" size="sm" onClick={() => setIsEditProfile(true)}>
+                        <Edit class="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Show>
                   </CardHeader>
                   <CardContent>
                     <div class="flex items-center space-x-4">
                       <Avatar class="w-16 h-16">
-                        <img src={ProfileIcon} alt="logo" class="w-16 h-16" />
+                        <img src={profileImg()} alt="logo" class="w-16 h-16 object-cover rounded-full" />
                         <AvatarFallback class="bg-gray-800 text-white text-lg">GS</AvatarFallback>
                       </Avatar>
+                      <Show when={isEditProfile()}>
+                        <input type="file" accept="image/*" class="mt-2" onChange={handleProfileImgChange} />
+                      </Show>
                       <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Gojo Satoru</h3>
-                        <p class="text-sm text-gray-600">Admin</p>
-                        <p class="text-sm text-gray-500">Jawa Tengah, Indonesia</p>
+                        <h3 class="text-lg font-semibold text-gray-900">{firstName()} {lastName()}</h3>
+                        <p class="text-sm text-gray-600">{bio()}</p>
+                        <p class="text-sm text-gray-500">{cityState()}, {country()}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -175,58 +231,118 @@ const Profile = () => {
                 <Card>
                   <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-lg">Personal Information</CardTitle>
-                    <Button variant="outline" size="sm">
-                      <Edit class="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
+                    <Show when={!isEditPersonal()} fallback={
+                      <button
+                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
+                        onClick={() => setIsEditPersonal(false)}
+                      >
+                        <Check class="w-4 h-4 mr-1" />
+                        <span class="font-semibold tracking-wide">Save</span>
+                      </button>
+                    }>
+                      <Button variant="outline" size="sm" onClick={() => setIsEditPersonal(true)}>
+                        <Edit class="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Show>
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label class="text-sm font-medium text-gray-500">First Name</label>
-                        <p class="text-gray-900 mt-1">Gojo</p>
+                        <Show when={!isEditPersonal()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={firstName()} onInput={e => setFirstName(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{firstName()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Last Name</label>
-                        <p class="text-gray-900 mt-1">Satoru</p>
+                        <Show when={!isEditPersonal()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={lastName()} onInput={e => setLastName(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{lastName()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Email Address</label>
-                        <p class="text-gray-900 mt-1">zenmuhammad900@gmail.com</p>
+                        <Show when={!isEditPersonal()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={email()} onInput={e => setEmail(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{email()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Phone</label>
-                        <p class="text-gray-900 mt-1">+62 895 2035 8258</p>
+                        <Show when={!isEditPersonal()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={phone()} onInput={e => setPhone(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{phone()}</p>
+                        </Show>
                       </div>
                     </div>
                     <div>
                       <label class="text-sm font-medium text-gray-500">Bio</label>
-                      <p class="text-gray-900 mt-1">Admin</p>
+                      <Show when={!isEditPersonal()} fallback={
+                        <input class="w-full border rounded px-2 py-1" value={bio()} onInput={e => setBio(e.target.value)} />
+                      }>
+                        <p class="text-gray-900 mt-1">{bio()}</p>
+                      </Show>
                     </div>
                   </CardContent>
                 </Card>
                 {/* Address */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-lg">Address</CardTitle>
+                    <Show when={!isEditAddress()} fallback={
+                      <button
+                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
+                        onClick={() => setIsEditAddress(false)}
+                      >
+                        <Check class="w-4 h-4 mr-1" />
+                        <span class="font-semibold tracking-wide">Save</span>
+                      </button>
+                    }>
+                      <Button variant="outline" size="sm" onClick={() => setIsEditAddress(true)}>
+                        <Edit class="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Show>
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label class="text-sm font-medium text-gray-500">Country</label>
-                        <p class="text-gray-900 mt-1">Indonesia</p>
+                        <Show when={!isEditAddress()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={country()} onInput={e => setCountry(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{country()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">City / State</label>
-                        <p class="text-gray-900 mt-1">Purwokerto, Jawa Tengah</p>
+                        <Show when={!isEditAddress()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={cityState()} onInput={e => setCityState(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{cityState()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Kode Pos</label>
-                        <p class="text-gray-900 mt-1">53141</p>
+                        <Show when={!isEditAddress()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={kodePos()} onInput={e => setKodePos(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{kodePos()}</p>
+                        </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">TAX ID</label>
-                        <p class="text-gray-900 mt-1">-</p>
+                        <Show when={!isEditAddress()} fallback={
+                          <input class="w-full border rounded px-2 py-1" value={taxId()} onInput={e => setTaxId(e.target.value)} />
+                        }>
+                          <p class="text-gray-900 mt-1">{taxId()}</p>
+                        </Show>
                       </div>
                     </div>
                   </CardContent>
@@ -383,14 +499,48 @@ const Profile = () => {
               </Show>
               {/* Delete Account Tab */}
               <Show when={activeTab() === 4}>
-                <div class="flex-1 bg-white rounded-2xl p-6 shadow-lg space-y-6 flex items-center justify-center min-h-[300px]">
-                  <div class="text-center">
-                    <h2 class="text-2xl font-semibold text-red-600 mb-4">Delete Account</h2>
-                    <p class="text-gray-700 mb-6">Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.</p>
-                    <Button variant="default" class="bg-red-500 hover:bg-red-600">Hapus Akun</Button>
+                <div class="flex-1 bg-white rounded-2xl p-6 shadow-lg space-y-6">
+                  <div>
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Delete Account</h2>
                   </div>
+                  <Card class="border-red-200 bg-red-50">
+                    <CardHeader>
+                      <CardTitle class="text-lg text-red-800">⚠️ Peringatan Penting</CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-4">
+                      <p class="text-red-700">
+                        Menghapus akun adalah tindakan yang tidak dapat dibatalkan. Setelah akun dihapus:
+                      </p>
+                      <ul class="list-disc list-inside space-y-2 text-red-700 ml-4">
+                        <li>Semua data profil Anda akan dihapus secara permanen</li>
+                        <li>Riwayat transaksi dan pembayaran akan hilang</li>
+                        <li>Saldo yang tersisa tidak dapat dikembalikan</li>
+                        <li>Akun tidak dapat dipulihkan kembali</li>
+                      </ul>
+                      <div class="mt-6">
+                        <Button 
+                          class="w-full bg-red-600 hover:bg-red-700 text-white"
+                          onClick={() => setShowModal('hapus')}
+                        >
+                          Hapus Akun Saya
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </Show>
+              {/* Modal Popups */}
+              {showModal() === 'hapus' && (
+                <div class="fixed inset-0 flex items-center justify-center z-50 bg-black/40">
+                  <div class="bg-white rounded-xl shadow-lg p-8 max-w-xs w-full flex flex-col items-center">
+                    <div class="font-bold text-lg mb-4 text-center">Anda yakin ingin menghapus akun ini?</div>
+                    <div class="flex gap-4 mt-2">
+                      <button class="px-6 py-2 rounded bg-[#ff5c5c] text-white font-semibold hover:bg-[#c0392b] transition" onClick={() => { setShowModal(''); navigate('/'); }}>Ya</button>
+                      <button class="px-6 py-2 rounded bg-gray-200 font-semibold hover:bg-gray-300 transition" onClick={() => setShowModal('')}>Tidak</button>
+                    </div>
+                  </div>
+                </div>
+                )}
             </div>
           </div>
         </main>

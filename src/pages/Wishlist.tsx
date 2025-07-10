@@ -41,10 +41,10 @@ interface Category {
   };
   
   const categories: Category[] = [
-    { id: 1, name: 'Gasoline', img: Ban, active: false },
-    { id: 2, name: 'Diesel', img: Oli, active: false },
-    { id: 3, name: 'Electric', img: Tow, active: false },
-    { id: 4, name: 'Hybrid', img: Fuel, active: false },
+    { id: 1, name: 'Fuel', img: Fuel, active: false },
+    { id: 2, name: 'Towing', img: Tow, active: false },
+    { id: 3, name: 'Puncture', img: Ban, active: false },
+    { id: 4, name: 'Oil', img: Oli, active: false },
   ];
   
   const fuelStations: Station[] = [
@@ -170,7 +170,16 @@ const Wishlist = () => {
               </div>
             </div>
             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <img src={Notif} alt="logo" class="w-5 h-5" />
+              <img
+                src={Notif}
+                alt="logo"
+                class="w-5 h-5 cursor-pointer"
+                ref={el => (window as any).notifAnchor = el}
+                onClick={e => {
+                  (window as any).notifAnchor = e.currentTarget;
+                  (window as any).setNotifOpen(true);
+                }}
+              />
             </div>
             <img src={ProfileIcon} alt="logo" class="w-10 h-10" />
           </div>

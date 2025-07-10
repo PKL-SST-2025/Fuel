@@ -21,12 +21,14 @@ import berkoh from '../assets/Home/PerBerkoh.png';
 import Pertamina from '../assets/Home/LogoP.png';
 import Shell from '../assets/Home/LogoS.png';
 import BP from '../assets/Home/BP.png';
-import { createSignal } from 'solid-js';
-import { A } from '@solidjs/router';
+import { createSignal, onCleanup } from 'solid-js';
+import { A, useNavigate } from '@solidjs/router';
 
 const Dashboard = () => {
   const [selectedService, setSelectedService] = createSignal(0);
   const [selectedBrand, setSelectedBrand] = createSignal('Pertamina');
+  const [showComparison, setShowComparison] = createSignal(false);
+  const navigate = useNavigate();
 
   return (
     <div class="min-h-screen bg-gray-50">
@@ -67,7 +69,16 @@ const Dashboard = () => {
               </div>
             </div>
             <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <img src={Notif} alt="logo" class="w-5 h-5" />
+              <img
+                src={Notif}
+                alt="logo"
+                class="w-5 h-5 cursor-pointer"
+                ref={el => (window as any).notifAnchor = el}
+                onClick={e => {
+                  (window as any).notifAnchor = e.currentTarget;
+                  (window as any).setNotifOpen(true);
+                }}
+              />
             </div>
             <img src={ProfileIcon} alt="logo" class="w-10 h-10" />
           </div>
@@ -230,19 +241,75 @@ const Dashboard = () => {
                       </div>
                       <div class="flex flex-col items-center justify-center space-x-2">
                         <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-                          <img src={Shell} alt="logo" class="w-10 h-10" />
+                          <img src={Shell} alt="logo" class="w-10 h-10" onDblClick={() => navigate('/brand')} />
                         </div>
                         <span class="text-sm">Shell</span>
                       </div>
                     </div>
                   </div>
 
-                  <div class="flex items-center justify-between bg-white/20 rounded-2xl p-4">
-                    <span class="text-lg font-medium">Compare Prices</span>
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center">
-                      <ChevronRight class="w-6 h-6" />
+                  <button
+                    class="w-full bg-blue-400/60 hover:bg-blue-400/80 rounded-xl py-4 text-lg font-medium flex items-center justify-between px-6 transition mt-2 shadow"
+                    onClick={() => setShowComparison(v => !v)}
+                  >
+                    Compare Prices
+                    <ChevronRight class="w-6 h-6" />
+                  </button>
+
+                  {showComparison() && (
+                    <div class="bg-white rounded-2xl shadow-lg mt-6 p-6 text-gray-900">
+                      <div class="flex items-center justify-between mb-4">
+                        <span class="font-semibold text-lg text-blue-700">Perbandingan Harga BBM</span>
+                        <span class="text-xs text-gray-400">Update: 2024</span>
+                      </div>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-gray-500 border-b">
+                              <th class="py-2 px-3">Jenis BBM</th>
+                              <th class="py-2 px-3">Pertamina</th>
+                              <th class="py-2 px-3">Shell</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              {name: 'Pertalite', pertamina: 10000, shell: 10500},
+                              {name: 'Pertamax', pertamina: 13900, shell: 14200},
+                              {name: 'V-Power', pertamina: null, shell: 15000},
+                            ].map(row => (
+                              <tr class="border-b last:border-0">
+                                <td class="py-3 px-3 font-semibold">{row.name}</td>
+                                <td class="py-3 px-3">
+                                  {row.pertamina ? (
+                                    <span class="inline-flex items-center gap-2">
+                                      Rp {row.pertamina.toLocaleString('id-ID')}
+                                      {row.pertamina < (row.shell || 999999) && (
+                                        <span class="ml-2 bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">Lebih Murah</span>
+                                      )}
+                                    </span>
+                                  ) : (
+                                    <span class="text-gray-400">-</span>
+                                  )}
+                                </td>
+                                <td class="py-3 px-3">
+                                  {row.shell ? (
+                                    <span class="inline-flex items-center gap-2">
+                                      Rp {row.shell.toLocaleString('id-ID')}
+                                      {row.shell < (row.pertamina || 999999) && (
+                                        <span class="ml-2 bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">Lebih Murah</span>
+                                      )}
+                                    </span>
+                                  ) : (
+                                    <span class="text-gray-400">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -253,20 +320,40 @@ const Dashboard = () => {
 
                   <div class="grid grid-cols-3 gap-4">
                     {[{name: 'Pertamina', img: Pertamina}, {name: 'Shell', img: Shell}, {name: 'Vivo', img: BP}].map((brand) => (
-                      <label class={`text-center rounded-2xl p-2 py-4 cursor-pointer transition border-2 ${selectedBrand() === brand.name ? 'bg-blue-200 border-blue-500' : 'bg-gray-200 border-transparent'}`}> 
-                        <input
-                          type="radio"
-                          name="brand"
-                          value={brand.name}
-                          checked={selectedBrand() === brand.name}
-                          onChange={() => setSelectedBrand(brand.name)}
-                          class="hidden"
-                        />
-                        <div class="w-12 h-12 rounded-xl mx-auto mb-2 flex items-center justify-center">
-                          <img src={brand.img} alt="logo" class="w-10 h-10" />
-                        </div>
-                        <span class="text-xs text-gray-600">{brand.name}</span>
-                      </label>
+                      brand.name === 'Shell' ? (
+                        <label
+                          class={`text-center rounded-2xl p-2 py-4 cursor-pointer transition border-2 ${selectedBrand() === brand.name ? 'bg-blue-200 border-blue-500' : 'bg-gray-200 border-transparent'}`}
+                          onDblClick={() => navigate('/brand')}
+                        >
+                          <input
+                            type="radio"
+                            name="brand"
+                            value={brand.name}
+                            checked={selectedBrand() === brand.name}
+                            onChange={() => setSelectedBrand(brand.name)}
+                            class="hidden"
+                          />
+                          <div class="w-12 h-12 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                            <img src={brand.img} alt="logo" class="w-10 h-10" />
+                          </div>
+                          <span class="text-xs text-gray-600">{brand.name}</span>
+                        </label>
+                      ) : (
+                        <label class={`text-center rounded-2xl p-2 py-4 cursor-pointer transition border-2 ${selectedBrand() === brand.name ? 'bg-blue-200 border-blue-500' : 'bg-gray-200 border-transparent'}`}> 
+                          <input
+                            type="radio"
+                            name="brand"
+                            value={brand.name}
+                            checked={selectedBrand() === brand.name}
+                            onChange={() => setSelectedBrand(brand.name)}
+                            class="hidden"
+                          />
+                          <div class="w-12 h-12 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                            <img src={brand.img} alt="logo" class="w-10 h-10" />
+                          </div>
+                          <span class="text-xs text-gray-600">{brand.name}</span>
+                        </label>
+                      )
                     ))}
                   </div>
 
