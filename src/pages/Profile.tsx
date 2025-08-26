@@ -12,13 +12,15 @@ import HouseIcon from '../assets/SideBar/House.png';
 import LocationIcon from '../assets/SideBar/Lokasi.png';
 import FuelIcon from '../assets/SideBar/Fuel.png';
 import Notif from '../assets/SideBar/Notif1.png';
-import { createSignal, For, Show } from 'solid-js';
+import { createSignal, For, Show, onMount, createEffect } from 'solid-js';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from '@solidjs/router';
+import { useAuth, User } from '../lib/auth';
+import api from '../lib/api';
 
 const Profile = () => {
   const [activeTab, setActiveTab] = createSignal(1);
@@ -27,16 +29,49 @@ const Profile = () => {
   const [isEditPersonal, setIsEditPersonal] = createSignal(false);
   const [isEditAddress, setIsEditAddress] = createSignal(false);
   const [profileImg, setProfileImg] = createSignal(ProfileIcon);
-  const [firstName, setFirstName] = createSignal('Gojo');
-  const [lastName, setLastName] = createSignal('Satoru');
-  const [email, setEmail] = createSignal('zenmuhammad900@gmail.com');
-  const [phone, setPhone] = createSignal('+62 895 2035 8258');
-  const [bio, setBio] = createSignal('Admin');
-  const [country, setCountry] = createSignal('Indonesia');
-  const [cityState, setCityState] = createSignal('Purwokerto, Jawa Tengah');
-  const [kodePos, setKodePos] = createSignal('53141');
-  const [taxId, setTaxId] = createSignal('-');
+  
+    const [state, { logout, updateUser }] = useAuth();
   const navigate = useNavigate();
+
+  const user = () => state.user;
+
+  const [formData, setFormData] = createSignal<Partial<User>>({});
+
+  onMount(() => {
+    if (!state.isAuthenticated && !state.isLoading) {
+      navigate('/login');
+    }
+    if (state.user) {
+        setFormData(state.user);
+    }
+  });
+
+  createEffect(() => {
+    if (!state.isAuthenticated && !state.isLoading) {
+        navigate('/login');
+    }
+    if(state.user) {
+        setFormData(state.user);
+    }
+  });
+
+  const handleInputChange = (field: keyof User, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async (section: 'profile' | 'personal' | 'address') => {
+    try {
+      const updatedUser = await updateUser(formData());
+      if (updatedUser) {
+        setFormData(updatedUser);
+      }
+      if (section === 'profile') setIsEditProfile(false);
+      if (section === 'personal') setIsEditPersonal(false);
+      if (section === 'address') setIsEditAddress(false);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
+  };
 
   // Untuk handle upload gambar profil
   const handleProfileImgChange = (e: Event) => {
@@ -135,7 +170,7 @@ const Profile = () => {
             <a class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center" onClick={() => setActiveTab(1)} style={{ cursor: 'pointer', background: activeTab() === 1 ? '#e0e7ff' : 'transparent' }}>
               <img src={ProfileIcon} alt="logo" class="w-8 h-8" />
             </a>
-            <a href="/" class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center">
+            <a href="#" onClick={() => logout()} class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center">
               <img src={LogoutIcon} alt="logo" class="w-6 h-6" />
             </a>
           </div>
@@ -196,13 +231,10 @@ const Profile = () => {
                   <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-xl">My Profile</CardTitle>
                     <Show when={!isEditProfile()} fallback={
-                      <button
-                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
-                        onClick={() => setIsEditProfile(false)}
-                      >
-                        <Check class="w-4 h-4 mr-1" />
-                        <span class="font-semibold tracking-wide">Save</span>
-                      </button>
+                      <Button variant="default" size="sm" onClick={() => handleSave('profile')} class="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Check class="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
                     }>
                       <Button variant="outline" size="sm" onClick={() => setIsEditProfile(true)}>
                         <Edit class="w-4 h-4 mr-2" />
@@ -220,9 +252,15 @@ const Profile = () => {
                         <input type="file" accept="image/*" class="mt-2" onChange={handleProfileImgChange} />
                       </Show>
                       <div>
-                        <h3 class="text-lg font-semibold text-gray-900">{firstName()} {lastName()}</h3>
-                        <p class="text-sm text-gray-600">{bio()}</p>
-                        <p class="text-sm text-gray-500">{cityState()}, {country()}</p>
+                        <Show when={user()} fallback={<p>Loading user...</p>}>
+                        <Show when={!isEditProfile()} fallback={
+                          <input class="w-full border rounded px-2 py-1 text-lg font-semibold" value={formData().nama_lengkap || ''} onInput={e => handleInputChange('nama_lengkap', e.target.value)} />
+                        }>
+                          <h3 class="text-lg font-semibold text-gray-900">{user()?.nama_lengkap}</h3>
+                        </Show>
+                        <p class="text-sm text-gray-600">{user()?.role}</p>
+                        <p class="text-sm text-gray-500">Purwokerto, Indonesia</p>
+                      </Show>
                       </div>
                     </div>
                   </CardContent>
@@ -232,13 +270,10 @@ const Profile = () => {
                   <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-lg">Personal Information</CardTitle>
                     <Show when={!isEditPersonal()} fallback={
-                      <button
-                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
-                        onClick={() => setIsEditPersonal(false)}
-                      >
-                        <Check class="w-4 h-4 mr-1" />
-                        <span class="font-semibold tracking-wide">Save</span>
-                      </button>
+                      <Button variant="default" size="sm" onClick={() => handleSave('personal')} class="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Check class="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
                     }>
                       <Button variant="outline" size="sm" onClick={() => setIsEditPersonal(true)}>
                         <Edit class="w-4 h-4 mr-2" />
@@ -251,42 +286,42 @@ const Profile = () => {
                       <div>
                         <label class="text-sm font-medium text-gray-500">First Name</label>
                         <Show when={!isEditPersonal()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={firstName()} onInput={e => setFirstName(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().first_name || ''} onInput={e => handleInputChange('first_name', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{firstName()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.first_name || ''}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Last Name</label>
                         <Show when={!isEditPersonal()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={lastName()} onInput={e => setLastName(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().last_name || ''} onInput={e => handleInputChange('last_name', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{lastName()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.last_name || ''}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Email Address</label>
                         <Show when={!isEditPersonal()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={email()} onInput={e => setEmail(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().email || ''} onInput={e => handleInputChange('email', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{email()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.email}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Phone</label>
                         <Show when={!isEditPersonal()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={phone()} onInput={e => setPhone(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().no_hp || ''} onInput={e => handleInputChange('no_hp', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{phone()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.no_hp || 'Not set'}</p>
                         </Show>
                       </div>
                     </div>
                     <div>
                       <label class="text-sm font-medium text-gray-500">Bio</label>
                       <Show when={!isEditPersonal()} fallback={
-                        <input class="w-full border rounded px-2 py-1" value={bio()} onInput={e => setBio(e.target.value)} />
+                        <input class="w-full border rounded px-2 py-1" value={formData().role || ''} onInput={e => handleInputChange('role', e.target.value)} />
                       }>
-                        <p class="text-gray-900 mt-1">{bio()}</p>
+                        <p class="text-gray-900 mt-1">{user()?.role}</p>
                       </Show>
                     </div>
                   </CardContent>
@@ -296,13 +331,10 @@ const Profile = () => {
                   <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle class="text-lg">Address</CardTitle>
                     <Show when={!isEditAddress()} fallback={
-                      <button
-                        class="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-300"
-                        onClick={() => setIsEditAddress(false)}
-                      >
-                        <Check class="w-4 h-4 mr-1" />
-                        <span class="font-semibold tracking-wide">Save</span>
-                      </button>
+                      <Button variant="default" size="sm" onClick={() => handleSave('address')} class="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Check class="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
                     }>
                       <Button variant="outline" size="sm" onClick={() => setIsEditAddress(true)}>
                         <Edit class="w-4 h-4 mr-2" />
@@ -315,33 +347,33 @@ const Profile = () => {
                       <div>
                         <label class="text-sm font-medium text-gray-500">Country</label>
                         <Show when={!isEditAddress()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={country()} onInput={e => setCountry(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().country || ''} onInput={e => handleInputChange('country', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{country()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.country || 'Not set'}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">City / State</label>
                         <Show when={!isEditAddress()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={cityState()} onInput={e => setCityState(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().city_state || ''} onInput={e => handleInputChange('city_state', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{cityState()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.city_state || 'Not set'}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">Kode Pos</label>
                         <Show when={!isEditAddress()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={kodePos()} onInput={e => setKodePos(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value={formData().kode_pos || ''} onInput={e => handleInputChange('kode_pos', e.target.value)} />
                         }>
-                          <p class="text-gray-900 mt-1">{kodePos()}</p>
+                          <p class="text-gray-900 mt-1">{user()?.kode_pos || 'Not set'}</p>
                         </Show>
                       </div>
                       <div>
                         <label class="text-sm font-medium text-gray-500">TAX ID</label>
                         <Show when={!isEditAddress()} fallback={
-                          <input class="w-full border rounded px-2 py-1" value={taxId()} onInput={e => setTaxId(e.target.value)} />
+                          <input class="w-full border rounded px-2 py-1" value="-" />
                         }>
-                          <p class="text-gray-900 mt-1">{taxId()}</p>
+                          <p class="text-gray-900 mt-1">-</p>
                         </Show>
                       </div>
                     </div>

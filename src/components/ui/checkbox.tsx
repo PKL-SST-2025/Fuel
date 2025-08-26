@@ -1,15 +1,19 @@
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 
-const Checkbox = (props: {
+interface CheckboxProps {
   id: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   class?: string;
-}) => {
-  const [local, rest] = splitProps(props, ['id', 'checked', 'onCheckedChange', 'class']);
+  disabled?: boolean;
+}
+
+const Checkbox = (props: CheckboxProps) => {
+  const [local, rest] = splitProps(props, ['id', 'checked', 'onCheckedChange', 'class', 'disabled']);
 
   const handleChange = (e: Event) => {
+    if (local.disabled) return;
     const target = e.currentTarget as HTMLInputElement;
     local.onCheckedChange(target.checked);
   };

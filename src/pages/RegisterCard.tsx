@@ -1,156 +1,237 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
+import { useNavigate, A } from '@solidjs/router';
+import { useAuth } from '../lib/auth';
+import { Loader2, ArrowLeft } from 'lucide-solid';
 import Checkbox from '../components/ui/checkbox';
+import monokrom from '../assets/monokrom.png';
+import brandicon from '../assets/brandicon.png';
 
 const SignupCard = () => {
-  const [firstName, setFirstName] = createSignal('');
-  const [lastName, setLastName] = createSignal('');
-  const [email, setEmail] = createSignal('');
-  const [phone, setPhone] = createSignal('');
-  const [password, setPassword] = createSignal('');
-  const [repeatPassword, setRepeatPassword] = createSignal('');
+  const navigate = useNavigate();
+  const [state, { register }] = useAuth();
+  
+  // Form state
+  const [formData, setFormData] = createSignal({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    password: '',
+    password_confirmation: '',
+  });
+  
   const [agreeToTerms, setAgreeToTerms] = createSignal(false);
+  const [successMessage, setSuccessMessage] = createSignal('');
 
-  const handleCreateAccount = (e: Event) => {
+  const handleInput = (field: string) => (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    setFormData(prev => ({ ...prev, [field]: target.value }));
+  };
+
+  const handleCreateAccount = async (e: Event) => {
     e.preventDefault();
-    console.log('Create account attempted with:', {
-      firstName: firstName(),
-      lastName: lastName(), 
-      email: email(),
-      phone: phone(),
-      password: password(),
-      repeatPassword: repeatPassword(),
-      agreeToTerms: agreeToTerms()
-    });
-    window.location.href = '/';
+
+    const data = formData();
+    const userData = {
+        nama_lengkap: `${data.first_name} ${data.last_name || ''}`.trim(),
+        email: data.email,
+        no_hp: data.phone || '081234567890', 
+        password: data.password,
+        password_confirmation: data.password_confirmation,
+        jenis_kelamin: 'L', 
+        tanggal_lahir: '2000-01-01', 
+        foto_profile: '', 
+        role: 'user' 
+    };
+
+    try {
+      await register(userData);
+      setSuccessMessage('Registrasi Berhasil! Mengarahkan ke halaman login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (error) {
+      // Error is handled by the auth state
+      console.error("Registration failed:", error);
+    }
   };
 
   return (
-    <div class="min-h-screen flex items-center justify-center px-10 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
-      <div class="w-full max-w-2xl">
-        <div class="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-3xl shadow-2xl p-8 md:p-12 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-blue-400/20 via-transparent to-transparent"></div>
-          <div class="absolute -inset-4 bg-blue-500/10 rounded-3xl blur-2xl"></div>
-
-          <div class="relative z-10">
-            <div class="text-center mb-8">
-              <h1 class="text-3xl text-left md:text-4xl font-bold text-white mb-2">
-                Let's Get Started
-              </h1>
-              <p class="text-blue-100 text-left text-lg">
-                Create your account
-              </p>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-8 sm:px-6 sm:py-10">
+      <div class="flex flex-col-reverse md:flex-row items-center gap-12 max-w-6xl w-full">
+        {/* Logo Card - Sisi Kiri (Desktop) */}
+        <div class="relative hidden md:block">
+          <div class="w-[38rem] h-[38rem] bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-3xl shadow-2xl flex items-center justify-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-400/30 via-transparent to-transparent"></div>
+            <div class="relative z-10">
+              <img src={monokrom} alt="Fuel" class="w-80 h-80" />
             </div>
+          </div>
+        </div>
 
-            <form onSubmit={handleCreateAccount} class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div>
-                  <label for="firstName" class="block text-white font-medium mb-2">
-                    First Name
-                  </label>
+        {/* Register Form - Sisi Kanan */}
+        <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
+          <div class="text-center mb-8">
+            <img src={brandicon} alt="Logo" class="h-12 w-auto mx-auto mb-4" />
+            <h2 class="text-2xl font-bold text-gray-900">
+              Create Account
+            </h2>
+            <p class="text-gray-500 mt-1">
+              Fill in your details to get started
+            </p>
+          </div>
+
+          <Show when={state.error}>
+            <div class="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+              {state.error}
+            </div>
+          </Show>
+          <Show when={successMessage()}>
+            <div class="mb-4 p-3 bg-green-50 text-green-700 rounded-md text-sm">
+              {successMessage()}
+            </div>
+          </Show>
+          <form onSubmit={handleCreateAccount} class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                  First Name
+                </label>
+                <div class="min-h-[52px] flex items-center">
                   <input
-                    id="firstName"
+                    id="first_name"
                     type="text"
-                    value={firstName()}
-                    onInput={(e) => setFirstName(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label for="lastName" class="block text-white font-medium mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    value={lastName()}
-                    onInput={(e) => setLastName(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
+                    value={formData().first_name}
+                    onInput={handleInput('first_name')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
                   />
                 </div>
               </div>
+              <div>
+                <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name
+                </label>
+                <div class="min-h-[52px] flex items-center">
+                  <input
+                    id="last_name"
+                    type="text"
+                    value={formData().last_name}
+                    onInput={handleInput('last_name')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
+                  />
+                </div>
+              </div>
+            </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div>
-                  <label for="email" class="block text-white font-medium mb-2">
-                    Email Address
-                  </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <div class="min-h-[52px] flex items-center">
                   <input
                     id="email"
                     type="email"
-                    value={email()}
-                    onInput={(e) => setEmail(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
+                    value={formData().email}
+                    onInput={handleInput('email')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
                   />
                 </div>
-                <div>
-                  <label for="phone" class="block text-white font-medium mb-2">
-                    Phone
-                  </label>
+              </div>
+              
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <div class="min-h-[52px] flex items-center">
                   <input
                     id="phone"
                     type="tel"
-                    value={phone()}
-                    onInput={(e) => setPhone(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
+                    value={formData().phone}
+                    onInput={handleInput('phone')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
                   />
                 </div>
               </div>
+            </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div>
-                  <label for="password" class="block text-white font-medium mb-2">
-                    Password
-                  </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="password" class="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div class="min-h-[52px] flex items-center">
                   <input
                     id="password"
                     type="password"
-                    value={password()}
-                    onInput={(e) => setPassword(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label for="repeatPassword" class="block text-white font-medium mb-2">
-                    Repeat Password
-                  </label>
-                  <input
-                    id="repeatPassword"
-                    type="password"
-                    value={repeatPassword()}
-                    onInput={(e) => setRepeatPassword(e.currentTarget.value)}
-                    class="w-full px-4 py-3 rounded-xl border-0 bg-white/90 backdrop-blur-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
-                    required
+                    value={formData().password}
+                    onInput={handleInput('password')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
                   />
                 </div>
               </div>
 
-              <div class="flex items-center space-x-3 mt-6">
+              <div class="space-y-2">
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
+                  Confirm Password
+                </label>
+                <div class="min-h-[52px] flex items-center">
+                  <input
+                    id="password_confirmation"
+                    type="password"
+                    value={formData().password_confirmation}
+                    onInput={handleInput('password_confirmation')}
+                    class="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 disabled:opacity-70"
+                    disabled={state.isLoading}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start">
+              <div class="flex items-center h-5">
                 <Checkbox
                   id="terms"
                   checked={agreeToTerms()}
-                  onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                  class="border-white/50 data-[state=checked]:bg-white data-[state=checked]:text-blue-600"
+                  onCheckedChange={(checked: boolean) => setAgreeToTerms(checked)}
+                  class={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${state.isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  disabled={state.isLoading}
                 />
-                <label for="terms" class="text-white text-sm cursor-pointer">
-                  I agree to all the term, privacy policy and fees
+              </div>
+              <div class="ml-3 text-sm">
+                <label for="terms" class="text-gray-700">
+                  I agree to the <a href="#" class="text-blue-600 hover:text-blue-500">Terms of Service</a> and <a href="#" class="text-blue-600 hover:text-blue-500">Privacy Policy</a>
                 </label>
               </div>
+            </div>
 
-              <div class="pt-4">
-                <button
-                  type="submit"
-                  class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
-          </div>
+            <div class="mt-6">
+              <button
+                type="submit"
+                disabled={state.isLoading || !agreeToTerms()}
+                class={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${!agreeToTerms() || state.isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
+                {state.isLoading ? (
+                  <>
+                    <Loader2 class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
+                    Creating account...
+                  </>
+                ) : 'Create account'}
+              </button>
+              
+              <p class="mt-4 text-center text-sm text-gray-600">
+                Already have an account?{' '}
+                <A href="/login" class="font-medium text-blue-600 hover:text-blue-500">
+                  Sign in
+                </A>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
     </div>

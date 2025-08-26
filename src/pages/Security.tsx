@@ -90,7 +90,7 @@ const Security = () => {
           <aside class="w-22 bg-white shadow-sm h-screen fixed left-0 top-0 pt-8">
             <img src={brandIcon} alt="logo" class="w-13 h-15 mx-auto"  />
             <div class="flex flex-col items-center space-y-6 py-6 pt-24">
-                <A href="/dashboard" class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center">
+                <A href="/" class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center">
                   <img src={homeIcon} alt="logo" class="w-5 h-5" />
                 </A>
                 <A href="/explore" class="w-14 h-14 bg-transparent rounded-full flex items-center justify-center">
